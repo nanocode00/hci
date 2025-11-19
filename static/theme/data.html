@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <title>Dot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <!-- ** CSS Plugins Needed for the Project ** -->
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="/theme/plugins/bootstrap/bootstrap.min.css">
+  <!-- themefy-icon -->
+  <link rel="stylesheet" href="/theme/plugins/themify-icons/themify-icons.css">
+  <!--Favicon-->
+  <link rel="icon" href="/theme/images/favicon.png" type="image/x-icon">
+  <!-- fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+  <!-- Main Stylesheet -->
+  <link href="/theme/assets/style.css" rel="stylesheet" media="screen" />
+</head>
+
+<body>
+  <!-- header -->
+  <header class="shadow-bottom sticky-top bg-white">
+    <nav class="navbar navbar-expand-md navbar-light">
+      <div class="container">
+        <a class="navbar-brand px-2" href="index.html">Dot</a>
+        <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#navigation"
+          aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+				<div class="collapse navbar-collapse text-center" id="navigation">
+					<ul class="navbar-nav ml-auto">
+						<li class="nav-item">
+							<a class="nav-link text-dark" href="/theme/index.html">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" href="/theme/data.html">Data</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" href="/theme/statistic.html">Statistics</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" href="/theme/signin.html">Sign in</a>
+						</li>
+					</ul>
+				</div>
+      </div>
+    </nav>
+  </header>
+  <!-- /header -->
+
+  <!-- data -->
+  <section class="section pb-0">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="section-title text-primary">Company</h2>
+          <!-- accordion -->
+          <!-- 1. 테이블 전체에 ID를 줍니다 (그룹핑용) -->
+            <table class="table table-hover" id="accordionTable">
+              <thead>
+                <tr>
+                  <!-- 예시로 컬럼을 4개 만들었습니다 -->
+                  <th scope="col">Date</th>
+                  <th scope="col">Analyst</th>
+                  <th scope="col">Position</th>
+                  <th scope="col">Target Price</th>
+                  <th scope="col">PL</th>
+                  <th scope="col">Expert Firm</th>
+                  <th scope="col">Inc Info</th>
+                  <th scope="col">Article</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- [1번 행]] -->
+                <!-- data-toggle="collapse": 클릭 기능 활성화 -->
+                <!-- data-target="#detail1": 클릭 시 열릴 상세 내용의 ID 연결 -->
+                <tr data-toggle="collapse" data-target="#detail1" style="cursor:pointer;">
+                  <td>2000-05-17</td>
+                  <td>유태원</td>
+                  <td>Buy</td>
+                  <td>235,000</td>
+                  <td>99%</td>
+                  <td>키움증권</td>
+                  <td>url</td>
+                  <td>url</td>
+                </tr>
+
+                <!-- [1번 상세 행] -->
+                <tr>
+                  <!-- colspan="8": 열개수와 맞추기 -->
+                  <td colspan="8" class="p-0 border-0">
+                    <!-- 실제 접히는 영역 -->
+                    <!-- id="detail1": 위의 data-target과 일치해야 함 -->
+                    <!-- data-parent="#accordionTable": 이걸 넣어야 다른 행을 열 때 얘는 자동으로 닫힘 -->
+                    <div id="detail1" class="collapse" data-parent="#accordionTable">
+                      <div class="p-4 bg-light">
+                        <h5>상세 정보</h5>
+                        <p>
+                          블라블라 블라블라
+                        </p>
+                        <button class="btn btn-primary btn-sm">수정하기</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- [2번 행] -->
+                <tr data-toggle="collapse" data-target="#detail2" style="cursor:pointer;">
+                  <td>2000-25-37</td>
+                  <td>김철수</td>
+                  <td>Sell</td>
+                  <td>90</td>
+                  <td>10000%</td>
+                  <td>키움증권</td>
+                  <td>url</td>
+                  <td>url</td>
+                </tr>
+
+                <!-- [2번 상세 행] -->
+                <tr>  
+                  <!-- colspan="8": 열개수와 맞추기 -->
+                  <td colspan="8" class="p-0 border-0">
+                    <!-- 실제 접히는 영역 -->
+                    <div id="detail2" class="collapse" data-parent="#accordionTable">
+                      <div class="p-4 bg-light">
+                        <h5>상세 정보</h5>
+                        <p>
+                          배터리가 없어
+                        </p>
+                        <button class="btn btn-primary btn-sm">버튼</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- [3번 행]-->
+                <tr data-toggle="collapse" data-target="#detail3" style="cursor:pointer;">
+                  <td>1971-10-30</td>
+                  <td>이름이름이름</td>
+                  <td>Sell팔아팔아</td>
+                  <td>19,000</td>
+                  <td>21%</td>
+                  <td>삼성증권</td>
+                  <td>url</td>
+                  <td>url</td>
+                </tr>
+
+                <!-- [3번 상세 행] -->
+                <tr>
+                  <!-- colspan="8": 열개수와 맞추기 -->
+                  <td colspan="8" class="p-0 border-0">
+                    <!-- 실제 접히는 영역 -->
+                    <div id="detail3" class="collapse" data-parent="#accordionTable">
+                      <div class="p-4 bg-light">
+                        <h5>상세 정보</h5>
+                        <p>
+                          상세내용을 적어보아요
+                        </p>
+                        <button class="btn btn-primary btn-sm">수정하기</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /data -->
+
+  <!-- footer -->
+  <footer class="section pb-4">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8 text-md-left text-center">
+          <p class="mb-md-0 mb-4">Copyright © 2020 Designed and Developed by <a
+              href="https://themefisher.com/">themefisher</a></p>
+        </div>
+        <div class="col-md-4 text-md-right text-center">
+          <ul class="list-inline">
+            <li class="list-inline-item"><a class="text-color d-inline-block p-2" href="#"><i
+                  class="ti-facebook"></i></a></li>
+            <li class="list-inline-item"><a class="text-color d-inline-block p-2" href="#"><i
+                  class="ti-twitter-alt"></i></a></li>
+            <li class="list-inline-item"><a class="text-color d-inline-block p-2" href="#"><i class="ti-github"></i></a>
+            </li>
+            <li class="list-inline-item"><a class="text-color d-inline-block p-2" href="#"><i
+                  class="ti-linkedin"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <!-- /footer -->
+
+  <!-- ** JS Plugins Needed for the Project ** -->
+  <!-- jquiry -->
+  <script src="plugins/jquery/jquery-1.12.4.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="plugins/bootstrap/bootstrap.min.js"></script>
+  <!-- match-height JS -->
+  <script src="plugins/match-height/jquery.matchHeight-min.js"></script>
+  <!-- Main Script -->
+  <script src="assets/script.js"></script>
+</body>
+
+</html>
+
+</html>
