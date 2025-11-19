@@ -10,7 +10,7 @@ class Report(BaseModel):
     """
     report_date: Optional[date] = None  
     author: Optional[str] = None
-    provided_by: Optional[str] = None  # 기존 'provided' 필드 이름을 명확하게 변경
+    provided_by: Optional[str] = None 
     ticker: Optional[str] = None
     attachment_url: Optional[str] = None  
 
