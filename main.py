@@ -74,5 +74,3 @@ async def read_index():
 app.mount("/", StaticFiles(directory="static"), name="static")
 
 
-# conda activate rla
-# uvicorn main:app --reload
