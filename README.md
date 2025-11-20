@@ -1,12 +1,21 @@
-가능하면 가상환경 만들어서 패키지 관리하는게 좋아보여요
+```markdown
+### 📌 프로젝트 실행 및 배포 안내
 
-로컬 확인 : 
-uvicorn main:app --reload
-http://127.0.0.1:8000/
-requirements.txt 의 fastapi 기반으로 동작하기 때문에 패키지 설치하셔야해요
-웹에서 확인 : 
-https://hci-q9hs.onrender.com
-웹에서 확인은 깃허브 바탕으로 배포가 이뤄지기 때문에 깃허브 코드 수정이 이뤄지지 않으면 수정사항을 확인하기 어려워요
+**1. 환경 설정**
+* 가능하면 **가상환경**을 만들어서 진행해 주세요.
+* `requirements.txt`에 있는 패키지들을 설치해야 정상 동작합니다. (FastAPI 기반)
 
-HCI-main, sneat-1.0.0 은 신경쓰지 않으셔도 됩니다
-/static/theme/assets, /static/theme/assets2 또한 신경쓰지 않으셔도 됩니다.
+**2. 로컬에서 확인하기**
+터미널에 아래 명령어를 입력하세요.
+`uvicorn main:app --reload`
+👉 접속: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+
+**3. 웹에서 확인하기**
+👉 링크: [https://hci-q9hs.onrender.com](https://hci-q9hs.onrender.com)
+* 이 링크는 **GitHub 코드**를 기준으로 배포됩니다.
+* 코드를 수정하셨다면 꼭 깃허브에 올려주셔야(Push) 웹에서도 확인 가능합니다!
+
+**❌ 무시해도 되는 파일들**
+아래 폴더/파일들은 신경 쓰지 않으셔도 됩니다.
+* `HCI-main`, `sneat-1.0.0`
+* `/static/theme/assets`, `/static/theme/assets2`
