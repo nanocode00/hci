@@ -58,12 +58,58 @@
       <div class="row">
         <div class="col-12">
           <h2 class="section-title text-primary">Company</h2>
+            <div class="row mt-5"> <!-- mt-5: 위쪽 여백을 줍니다 -->
+              
+              <!-- 카드 1개 단위 -->
+              <div class="col-12 col-md-4 mb-4"> 
+                <div class="card h-100 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">삼성전자</h5>
+                    <p class="card-text">시총? 내용 내용 내용</p>
+                    <a href="#" class="btn btn-primary">이동하기</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 카드 2개 단위 -->
+              <div class="col-12 col-md-4 mb-4"> 
+                <div class="card h-100 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">삼성중공업</h5>
+                    <p class="card-text">외용 외용 외용</p>
+                    <a href="#" class="btn btn-primary">이동하기</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 카드 3개 단위 -->
+              <div class="col-12 col-md-4 mb-4"> 
+                <div class="card h-100 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title"></h5><h8 class="card-title">코스피</h8>
+                    <p class="card-text">내용 내용</p>
+                    <a href="#" class="btn btn-primary">이동하기</a>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 4번째 카드가 추가되면 자동으로 아랫줄로 내려갑니다 -->
+              <div class="col-12 col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">삼성제약</h5>
+                    <p class="card-text">티커 : 01102</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           <!-- accordion -->
           <!-- 1. 테이블 전체에 ID를 줍니다 (그룹핑용) -->
             <table class="table table-hover" id="accordionTable">
               <thead>
                 <tr>
-                  <!-- 예시로 컬럼을 4개 만들었습니다 -->
+
                   <th scope="col">Date</th>
                   <th scope="col">Analyst</th>
                   <th scope="col">Position</th>
@@ -91,18 +137,60 @@
 
                 <!-- [1번 상세 행] -->
                 <tr>
-                  <!-- colspan="8": 열개수와 맞추기 -->
                   <td colspan="8" class="p-0 border-0">
-                    <!-- 실제 접히는 영역 -->
-                    <!-- id="detail1": 위의 data-target과 일치해야 함 -->
-                    <!-- data-parent="#accordionTable": 이걸 넣어야 다른 행을 열 때 얘는 자동으로 닫힘 -->
                     <div id="detail1" class="collapse" data-parent="#accordionTable">
                       <div class="p-4 bg-light">
-                        <h5>상세 정보</h5>
-                        <p>
-                          블라블라 블라블라
-                        </p>
-                        <button class="btn btn-primary btn-sm">수정하기</button>
+                        
+                        <!-- ▼▼▼ 1. 탭 버튼 부분 (메뉴) ▼▼▼ -->
+                        <ul class="nav nav-tabs" id="myTabRow1" role="tablist">
+                          <!-- 첫 번째 탭 버튼 -->
+                          <li class="nav-item">
+                            <a class="nav-link active" id="tab-r1-home" data-toggle="tab" href="#content-r1-home" role="tab" aria-selected="true">
+                              기본 정보
+                            </a>
+                          </li>
+                          <!-- 두 번째 탭 버튼 -->
+                          <li class="nav-item">
+                            <a class="nav-link" id="tab-r1-profile" data-toggle="tab" href="#content-r1-profile" role="tab" aria-selected="false">
+                              히스토리
+                            </a>
+                          </li>
+                          <!-- 세 번째 탭 버튼 -->
+                          <li class="nav-item">
+                            <a class="nav-link" id="tab-r1-contact" data-toggle="tab" href="#content-r1-contact" role="tab" aria-selected="false">
+                              기타 설정
+                            </a>
+                          </li>
+                        </ul>
+
+                        <!-- ▼▼▼ 2. 탭 내용 부분 (실제 컨텐츠) ▼▼▼ -->
+                        <div class="tab-content bg-white border border-top-0 p-3" id="myTabContentRow1">
+                          
+                          <!-- 첫 번째 탭의 내용 -->
+                          <!-- id가 위 버튼의 href와 같아야 함 (#content-r1-home) -->
+                          <div class="tab-pane fade show active" id="content-r1-home" role="tabpanel">
+                            <h6>기본 정보 화면입니다.</h6>
+                            <p>이곳에 회사 기본 정보를 테이블이나 텍스트로 넣으세요.</p>
+                          </div>
+
+                          <!-- 두 번째 탭의 내용 -->
+                          <div class="tab-pane fade" id="content-r1-profile" role="tabpanel">
+                            <h6>히스토리 화면입니다.</h6>
+                            <ul>
+                              <li>2023-11-20: 수정됨</li>
+                              <li>2023-10-01: 생성됨</li>
+                            </ul>
+                          </div>
+
+                          <!-- 세 번째 탭의 내용 -->
+                          <div class="tab-pane fade" id="content-r1-contact" role="tabpanel">
+                            <h6>기타 설정 화면입니다.</h6>
+                            <button class="btn btn-danger btn-sm">삭제하기</button>
+                          </div>
+
+                        </div>
+                        <!-- ▲▲▲ 탭 끝 ▲▲▲ -->
+
                       </div>
                     </div>
                   </td>
@@ -167,6 +255,8 @@
                 </tr>
               </tbody>
             </table>
+
+
         </div>
       </div>
     </div>
