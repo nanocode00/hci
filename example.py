@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import FinanceDataReader as fdr
 import re
+import numpy as np
 
 stocks = fdr.StockListing('KRX') # 코스피, 코스닥, 코넥스 전체
 
@@ -34,6 +35,7 @@ def remove_noise_and_split_title(title):
 # 수정
 base_url = "https://consensus.hankyung.com/analysis/list?sdate=2025-08-20&edate=2025-11-20&now_page={}&search_value=&report_type=CO&pagenum=20&search_text=&business_code="
 data = []
+print("l")
 max_page = 36
 for page_no in range(1, max_page):
     while True:
@@ -124,5 +126,106 @@ for code in unique_codes:
 # 3. 원본 데이터프레임에 '현재가격' 컬럼 추가 (Mapping)
 data['현재가격'] = data['종목코드'].map(price_map)
 
-data.to_csv("리포트_데이터.csv", index = False, encoding = "utf-8")
-# print(data.head()) # 디버그 용
+# 1. 종목코드별 레포트 개수 계산
+report_counts = data['종목코드'].value_counts()
+
+# 2. 단 하나의 레포트만 가진 종목의 개수 출력
+single_report_count = (report_counts == 1).sum() 
+double_report_count = (report_counts == 2).sum()
+print(f"단 하나의 레포트만 가진 종목(기업) 개수: {single_report_count}개") # 180
+print(f"레포트 두개 가진 종목(기업) 개수 : {double_report_count}개") # 83
+
+# 3. 단 하나의 레포트만 가진 기업들을 제거 (레포트가 2개 이상인 종목만 남김)
+# 레포트 개수가 1보다 큰 종목코드들의 인덱스(코드명)만 추출
+multi_report_codes = report_counts[report_counts > 2].index # 354개
+
+# 해당 코드 리스트에 포함된 행만 선택하여 새로운 데이터프레임 생성 (혹은 덮어쓰기)
+data_filtered = data[data['종목코드'].isin(multi_report_codes)].copy()
+
+print(f"필터링 전 데이터 개수: {len(data)}개")
+print(f"필터링 후 데이터 개수: {len(data_filtered)}개")
+
+print(data.head())
+# 1. 적정가격 데이터 전처리
+# 쉼표(,)를 제거하고 숫자형으로 변환합니다.
+# 'errors=coerce'는 숫자로 변환 불가능한 값(예: '-', 빈 문자열)을 NaN(결측치)으로 처리합니다.
+data_filtered['적정가격_수치'] = pd.to_numeric(data_filtered['적정가격'].astype(str).str.replace(',', ''), errors='coerce')
+
+# 적정가격이 0인 경우(목표가 미제시 등) 수익률이 -100%로 계산되는 것을 막기 위해 NaN으로 변경
+data_filtered.loc[data_filtered['적정가격_수치'] == 0, '적정가격_수치'] = np.nan
+
+# 2. 현재가격 데이터 확인 (이미 숫자형이지만 안전을 위해 변환 시도)
+data_filtered['현재가격'] = pd.to_numeric(data_filtered['현재가격'], errors='coerce')
+
+# 3. 수익률(괴리율) 계산
+# 공식: ((적정가격 - 현재가격) / 현재가격) * 100
+data_filtered['기대수익률'] = ((data_filtered['적정가격_수치'] - data_filtered['현재가격']) / data_filtered['현재가격']) * 100
+
+# 4. 보기 좋게 소수점 둘째 자리에서 반올림
+data_filtered['기대수익률'] = data_filtered['기대수익률'].round(2)
+
+# 5. 결과 확인 (수익률이 높은 순서대로 정렬해서 보기)
+print(data_filtered[['종목명', '현재가격', '적정가격', '기대수익률']].sort_values(by='기대수익률', ascending=False).head(10))
+
+# 6. 최종 파일 저장
+# 계산에 쓴 임시 컬럼('적정가격_수치')은 저장할 때 제외해도 됩니다.
+final_columns = ["작성일", "종목명", "종목코드", "제목", "적정가격", "현재가격", "기대수익률", "평가의견", "작성자", "작성기관", "기업정보", "첨부파일"]
+data_filtered.to_csv("리포트_데이터_최종.csv", columns=final_columns, index=False, encoding="utf-8-sig")
+
+# 1. 집계 기준 설정
+agg_rules = {
+    '종목명': 'first',
+    '현재가격': 'first',
+    '적정가격_수치': 'mean',    # 평균 적정가
+    '기대수익률': 'mean',       # 평균 수익률
+    '평가의견': lambda x: x.mode()[0] if not x.mode().empty else x.iloc[0] # 최빈값
+}
+
+# 2. 그룹화 및 집계 실행
+final_df = data_filtered.groupby('종목코드').agg(agg_rules).reset_index()
+
+# 3. 컬럼명 변경
+final_df.rename(columns={
+    '적정가격_수치': '평균적정가격',
+    '기대수익률': '평균기대수익률',
+    '평가의견': '대표평가의견'
+}, inplace=True)
+
+# ============================================================
+# [에러 해결 부분]
+# 결측치(NaN)가 있으면 int로 변환이 불가능하므로 0으로 채웁니다.
+final_df['평균적정가격'] = final_df['평균적정가격'].fillna(0)
+final_df['평균기대수익률'] = final_df['평균기대수익률'].fillna(0)
+# ============================================================
+
+# 4. 반올림 및 정수 변환
+final_df['평균적정가격'] = final_df['평균적정가격'].round(0).astype(int)
+final_df['평균기대수익률'] = final_df['평균기대수익률'].round(2)
+
+# 5. 수익률 높은 순으로 정렬 (평균적정가격이 0인 경우 맨 뒤로 가게 됨)
+final_df = final_df.sort_values(by='평균기대수익률', ascending=False)
+
+# 6. 최종 컬럼 순서 정리
+target_columns = ['종목코드', '종목명', '현재가격', '평균적정가격', '평균기대수익률', '대표평가의견']
+final_df = final_df[target_columns]
+
+# 결과 출력
+print(f"최종 요약된 기업 수: {len(final_df)}개")
+print(final_df.head(10))
+
+print(f"1. 수집된 전체 리포트 개수: {len(data)}개")
+print(f"   (수집된 고유 종목 수: {data['종목코드'].nunique()}개)")
+
+print("-" * 30)
+
+# 1개짜리 제거 로직 후
+print(f"2. 레포트가 2개 이상인 리포트 개수: {len(data_filtered)}개")
+print(f"   (필터링 후 살아남은 종목 수: {data_filtered['종목코드'].nunique()}개)")
+
+print("-" * 30)
+
+# 그룹화 후
+print(f"3. 최종 결과 데이터프레임 행 개수: {len(final_df)}개")
+
+# 파일 저장
+final_df.to_csv("종목별_평균수익률_요약.csv", index=False, encoding="utf-8-sig")
