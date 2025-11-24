@@ -1,0 +1,305 @@
+from sqlalchemy import (
+    create_engine, Column, Integer, Float, String, Date, Text, ForeignKey
+)
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy import text
+from datetime import datetime
+import csv
+
+# ============================
+# DB 설정
+# ============================
+DB_URL = "sqlite:///reports.db"  # 필요하면 파일명 변경
+engine = create_engine(DB_URL, echo=False, future=True)
+Base = declarative_base()
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+
+
+# ============================
+# 테이블 정의
+# ============================
+
+# 1) 종목
+class Stock(Base):
+    __tablename__ = "stocks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    stock_code = Column(String(20), unique=True, nullable=False, index=True)
+    stock_name = Column(String(100), nullable=False)
+    company_info_url = Column(String(500))
+
+    reports = relationship("Report", back_populates="stock")
+
+
+# 2) 증권사
+class Broker(Base):
+    __tablename__ = "brokers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+
+    reports = relationship("Report", back_populates="broker")
+
+
+# 3) 애널리스트
+class Author(Base):
+    __tablename__ = "authors"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+
+    reports = relationship("Report", back_populates="author")
+
+
+# 4) 평가의견 코드
+class Rating(Base):
+    __tablename__ = "ratings"
+
+    code = Column(String(10), primary_key=True)  # 'Buy', 'Sell', 'Hold', 'None'
+    description = Column(String(100))
+
+    reports = relationship("Report", back_populates="rating")
+
+
+# 5) 리포트 (팩트 테이블)
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    written_date = Column(Date, nullable=False, index=True)
+    title = Column(Text, nullable=False)
+    fair_price = Column(Integer)
+    current_price = Column(Integer)
+    expected_return = Column(Float)
+    attachment_url = Column(String(500))
+
+    stock_id = Column(Integer, ForeignKey("stocks.id"), nullable=False)
+    broker_id = Column(Integer, ForeignKey("brokers.id"), nullable=True)
+    author_id = Column(Integer, ForeignKey("authors.id"), nullable=True)
+    rating_code = Column(String(10), ForeignKey("ratings.code"), nullable=False)
+
+    stock = relationship("Stock", back_populates="reports")
+    broker = relationship("Broker", back_populates="reports")
+    author = relationship("Author", back_populates="reports")
+    rating = relationship("Rating", back_populates="reports")
+
+
+# ============================
+# 유틸 함수들
+# ============================
+
+def normalize_str(s: str | None):
+    if s is None:
+        return None
+    s = str(s).strip()
+    return s or None
+
+def parse_int(value: str | None):
+    if value is None:
+        return None
+    v = str(value).replace(",", "").strip()
+    if v == "":
+        return None
+    try:
+        return int(v)
+    except ValueError:
+        return None
+
+def parse_float(value: str | None):
+    if value is None:
+        return None
+    v = str(value).replace(",", "").strip()
+    if v == "":
+        return None
+    try:
+        return float(v)
+    except ValueError:
+        return None
+
+# 평가의견 정규화: Buy / Sell / Hold / None만 사용
+def normalize_rating(raw: str | None) -> str:
+    if raw is None:
+        return "None"
+
+    s = str(raw).strip().lower()
+    if s in {"", "nr", "투자의견없음", "n/a", "na", "notrated", "-"}:
+        return "None"
+
+    if s in {"buy", "매수", "tradingbuy"}:
+        return "Buy"
+
+    if s in {"hold"}:
+        return "Hold"
+
+    if s in {"sell", "매도", "underperform"}:
+        return "Sell"
+
+    # 그 외 애매한 건 일단 None 처리
+    return "None"
+
+
+# ============================
+# 스키마 & 기본 데이터 초기화
+# ============================
+
+def init_db():
+    Base.metadata.create_all(engine)
+
+    # ratings 테이블에 코드 채우기
+    with SessionLocal() as session:
+        for code, desc in [
+            ("Buy", "매수"),
+            ("Sell", "매도"),
+            ("Hold", "보유/중립"),
+            ("None", "투자의견 없음"),
+        ]:
+            if not session.get(Rating, code):
+                session.add(Rating(code=code, description=desc))
+        session.commit()
+
+
+# ============================
+# CSV → DB 적재
+# ============================
+
+def load_csv_to_db(csv_path: str):
+    session = SessionLocal()
+
+    # 캐시 (중복 insert 방지)
+    stock_cache: dict[str, Stock] = {}
+    broker_cache: dict[str, Broker] = {}
+    author_cache: dict[str, Author] = {}
+
+    try:
+        with open(csv_path, newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+
+            for row in reader:
+                # 1) 공통 파싱
+                written_date = datetime.strptime(row["작성일"].strip(), "%Y-%m-%d").date()
+                stock_name = normalize_str(row["종목명"])
+                stock_code = normalize_str(row["종목코드"])
+                title = normalize_str(row["제목"])
+
+                fair_price = parse_int(row.get("적정가격"))
+                current_price = parse_int(row.get("현재가격"))
+                expected_return = parse_float(row.get("기대수익률"))
+
+                rating_code = normalize_rating(row.get("평가의견"))
+                author_name = normalize_str(row.get("작성자"))
+                broker_name = normalize_str(row.get("작성기관"))
+
+                company_info_url = normalize_str(row.get("기업정보"))
+                attachment_url = normalize_str(row.get("첨부파일"))
+
+                # 2) 종목 (stocks) 처리
+                #    stock_code를 기준으로 1개만 존재
+                stock = None
+                if stock_code in stock_cache:
+                    stock = stock_cache[stock_code]
+                else:
+                    stock = session.query(Stock).filter_by(stock_code=stock_code).one_or_none()
+                    if stock is None:
+                        stock = Stock(
+                            stock_code=stock_code,
+                            stock_name=stock_name or "",
+                            company_info_url=company_info_url,
+                        )
+                        session.add(stock)
+                        session.flush()  # id 확보
+                    stock_cache[stock_code] = stock
+
+                # 3) 증권사 (brokers) 처리
+                broker = None
+                if broker_name:
+                    if broker_name in broker_cache:
+                        broker = broker_cache[broker_name]
+                    else:
+                        broker = session.query(Broker).filter_by(name=broker_name).one_or_none()
+                        if broker is None:
+                            broker = Broker(name=broker_name)
+                            session.add(broker)
+                            session.flush()
+                        broker_cache[broker_name] = broker
+
+                # 4) 애널리스트 (authors) 처리
+                author = None
+                if author_name:
+                    if author_name in author_cache:
+                        author = author_cache[author_name]
+                    else:
+                        author = session.query(Author).filter_by(name=author_name).one_or_none()
+                        if author is None:
+                            author = Author(name=author_name)
+                            session.add(author)
+                            session.flush()
+                        author_cache[author_name] = author
+
+                # 5) 리포트 (reports) 삽입
+                report = Report(
+                    written_date=written_date,
+                    title=title or "",
+                    fair_price=fair_price,
+                    current_price=current_price,
+                    expected_return=expected_return,
+                    attachment_url=attachment_url,
+
+                    stock_id=stock.id,
+                    broker_id=broker.id if broker else None,
+                    author_id=author.id if author else None,
+                    rating_code=rating_code,
+                )
+                session.add(report)
+
+        session.commit()
+        print(f"'{DB_URL}'에 저장 완료")
+    except Exception as e:
+        session.rollback()
+        print("에러 발생:", e)
+    finally:
+        session.close()
+
+# ============================
+# 뷰 생성
+# ============================
+def create_stock_summary_view():
+    with engine.connect() as conn:
+        # 기존 뷰 있으면 지우고 다시 생성
+        conn.execute(text("DROP VIEW IF EXISTS stock_summary"))
+        conn.execute(text("""
+            CREATE VIEW stock_summary AS
+            SELECT
+                s.stock_code              AS stock_code,
+                s.stock_name              AS stock_name,
+                (
+                    SELECT r2.current_price
+                    FROM reports r2
+                    WHERE r2.stock_id = s.id
+                    ORDER BY r2.written_date DESC, r2.id DESC
+                    LIMIT 1
+                ) AS current_price,
+                AVG(r.fair_price)         AS avg_fair_price,
+                AVG(r.expected_return)    AS avg_expected_return,
+                (
+                    SELECT r3.rating_code
+                    FROM reports r3
+                    WHERE r3.stock_id = s.id
+                    ORDER BY r3.written_date DESC, r3.id DESC
+                    LIMIT 1
+                ) AS main_rating
+            FROM stocks s
+            JOIN reports r ON r.stock_id = s.id
+            GROUP BY s.id, s.stock_code, s.stock_name;
+        """))
+    print("stock_summary 뷰 생성 완료")
+
+
+# ============================
+# 직접 실행용 엔트리포인트
+# ============================
+if __name__ == "__main__":
+    init_db()
+    # 네 CSV 파일 경로로 수정
+    load_csv_to_db("리포트_데이터_최종.csv")
+    create_stock_summary_view()
