@@ -1,7 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from db import SessionLocal, Report, Stock, Broker, Author
 
 app = FastAPI()
 
@@ -10,6 +13,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 2. Jinja2 Templates configuration
 templates = Jinja2Templates(directory="templates")
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @app.get("/api/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
@@ -30,8 +41,22 @@ async def read_card(request: Request):
     return templates.TemplateResponse("card.html", {"request": request})
 
 @app.get("/data.html", response_class=HTMLResponse)
-async def read_data(request: Request):
-    return templates.TemplateResponse("data.html", {"request": request})
+async def read_data(request: Request, q: str | None = None, db: Session = Depends(get_db)):
+    query = db.query(Report).join(Report.stock).outerjoin(Report.broker).outerjoin(Report.author)
+    
+    if q:
+        search_term = f"%{q}%"
+        query = query.filter(
+            or_(
+                Stock.stock_name.like(search_term),
+                Broker.name.like(search_term),
+                Author.name.like(search_term)
+            )
+        )
+    
+    reports = query.order_by(Report.written_date.desc()).all()
+    
+    return templates.TemplateResponse("data.html", {"request": request, "reports": reports, "q": q})
 
 @app.get("/statistic.html", response_class=HTMLResponse)
 async def read_statistic(request: Request):

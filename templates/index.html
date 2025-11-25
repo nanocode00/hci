@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block header_class %}banner overlay bg-cover{% endblock %}
+{% block header_attrs %}data-background="/static/images/banner.jpg"{% endblock %}
+{% block nav_class %}navbar-dark{% endblock %}
+
 {% block banner %}
 <div class="container section">
 	<div class="row">
@@ -7,8 +11,11 @@
 			<h1 class="text-white mb-3">Smart insight &amp; One search</h1>
 			<p class="text-white mb-4">See what analysts are saying, all in one place</p>
 			<div class="position-relative">
-				<input id="search" class="form-control" placeholder="Have a question? Just ask here or enter terms"><i
-					class="ti-search search-icon"></i>
+				<form action="/data.html" method="get">
+					<input id="search" name="q" class="form-control"
+						placeholder="Have a question? Just ask here or enter terms">
+					<i class="ti-search search-icon"></i>
+				</form>
 			</div>
 		</div>
 	</div>

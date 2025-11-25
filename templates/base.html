@@ -27,8 +27,9 @@
 <body>
     <!-- header -->
     {% block header %}
-    <header class="banner overlay bg-cover" data-background="/theme/images/banner.jpg">
-        <nav class="navbar navbar-expand-md navbar-dark">
+    <header class="{% block header_class %}shadow-bottom sticky-top bg-white{% endblock %}" {% block header_attrs %}{%
+        endblock %}>
+        <nav class="navbar navbar-expand-md {% block nav_class %}navbar-light{% endblock %}">
             <div class="container">
                 <a class="navbar-brand px-2" href="/">Dot</a>
                 <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#navigation"
