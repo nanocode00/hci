@@ -5,6 +5,7 @@ import pandas as pd
 import FinanceDataReader as fdr
 import re
 import numpy as np
+from get_pdf import download_pdfs
 
 stocks = fdr.StockListing('KRX') # 코스피, 코스닥, 코넥스 전체
 
@@ -96,6 +97,12 @@ for page_no in range(1, max_page):
 
     time.sleep(0.3) # 연결 끊김 방지를 위해
 data = pd.DataFrame(data, columns = ["작성일", "종목명", "종목코드", "제목", "적정가격", "평가의견", "작성자", "작성기관", "기업정보", "첨부파일"])
+
+# PDF 다운로드 실행
+print("PDF 다운로드를 시작합니다...")
+pdf_urls = data['첨부파일'].dropna().tolist()
+download_pdfs(pdf_urls)
+print("PDF 다운로드 완료.")
 
 from datetime import datetime, timedelta
 
