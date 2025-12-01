@@ -105,6 +105,18 @@
                           Summary
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="tab-r{{ loop.index }}-novice" data-toggle="tab"
+                          href="#content-r{{ loop.index }}-novice" role="tab" aria-selected="false">
+                          Novice
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="tab-r{{ loop.index }}-expert" data-toggle="tab"
+                          href="#content-r{{ loop.index }}-expert" role="tab" aria-selected="false">
+                          Expert
+                        </a>
+                      </li>
                     </ul>
 
                     <!-- Tab Content -->
@@ -112,11 +124,14 @@
 
                       <!-- Summary Tab -->
                       <div class="tab-pane fade show active" id="content-r{{ loop.index }}-sum" role="tabpanel">
-                        <h6>Report Title</h6>
-                        <p>{{ report.title }}</p>
-                        <p><strong>Stock:</strong> {{ report.stock.stock_name }} ({{ report.stock.stock_code }})</p>
-                        <p><strong>Current Price:</strong> {{ "{:,}".format(report.stock.current_price) if
-                          report.stock.current_price else '-' }}</p>
+                      </div>
+
+                      <!-- Novice Tab -->
+                      <div class="tab-pane fade" id="content-r{{ loop.index }}-novice" role="tabpanel">
+                      </div>
+
+                      <!-- Expert Tab -->
+                      <div class="tab-pane fade" id="content-r{{ loop.index }}-expert" role="tabpanel">
                       </div>
 
                     </div>
