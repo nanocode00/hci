@@ -54,8 +54,14 @@
               <td>{{ report.author.name if report.author else '-' }}</td>
               <td class="{{ text_class }}">{{ report.rating_code }}</td>
               <td class="{{ text_class }}">{{ "{:,}".format(report.fair_price) if report.fair_price else '-' }}</td>
-              <td class="{{ text_class }}">{{ "{:.2f}%".format(report.expected_return * 100) if report.expected_return
-                else '-' }}</td>
+              <td class="{{ text_class }}">
+                {% if report.stock.current_price and report.fair_price %}
+                {% set pl = ((report.fair_price - report.stock.current_price) / report.stock.current_price) * 100 %}
+                {{ "{:.2f}%".format(pl) }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
               <td>{{ report.broker.name if report.broker else '-' }}</td>
               <td>
                 {% if report.stock.company_info_url %}
@@ -96,8 +102,8 @@
                         <h6>Report Title</h6>
                         <p>{{ report.title }}</p>
                         <p><strong>Stock:</strong> {{ report.stock.stock_name }} ({{ report.stock.stock_code }})</p>
-                        <p><strong>Current Price:</strong> {{ "{:,}".format(report.current_price) if
-                          report.current_price else '-' }}</p>
+                        <p><strong>Current Price:</strong> {{ "{:,}".format(report.stock.current_price) if
+                          report.stock.current_price else '-' }}</p>
                       </div>
 
                     </div>

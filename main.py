@@ -6,14 +6,46 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from db import SessionLocal, Report, Stock, Broker, Author, init_db, load_csv_to_db, create_stock_summary_view
+import FinanceDataReader as fdr
+from datetime import datetime, timedelta
+
+def update_stock_prices():
+    print("주가 업데이트 시작...")
+    session = SessionLocal()
+    try:
+        stocks = session.query(Stock).all()
+        total = len(stocks)
+        for i, stock in enumerate(stocks):
+            try:
+                # 최근 1주일 데이터 조회
+                start_date = datetime.now() - timedelta(days=7)
+                df = fdr.DataReader(stock.stock_code, start_date)
+                if not df.empty:
+                    latest_price = int(df['Close'].iloc[-1])
+                    stock.current_price = latest_price
+            except Exception as e:
+                print(f"Error fetching price for {stock.stock_name} ({stock.stock_code}): {e}")
+            
+            if (i + 1) % 10 == 0:
+                print(f"주가 업데이트 진행 중: {i + 1}/{total}")
+        
+        session.commit()
+        print("주가 업데이트 완료")
+    except Exception as e:
+        session.rollback()
+        print(f"주가 업데이트 실패: {e}")
+    finally:
+        session.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     try:
         # 데이터가 없을 경우에만 로드하거나, 중복 체크 로직이 db.py에 있으므로 그냥 호출
-        load_csv_to_db("리포트_데이터_최종.csv")
+        load_csv_to_db("리포트_데이터_최종.csv", "pdf_summary_300files.csv")
         create_stock_summary_view()
+        # 주가 업데이트 실행
+        update_stock_prices()
     except Exception as e:
         print(f"DB Initialization Error: {e}")
     yield

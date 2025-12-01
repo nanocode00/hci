@@ -27,6 +27,7 @@ class Stock(Base):
     stock_code = Column(String(20), unique=True, nullable=False, index=True)
     stock_name = Column(String(100), nullable=False)
     company_info_url = Column(String(500))
+    current_price = Column(Integer, nullable=True)
 
     reports = relationship("Report", back_populates="stock")
 
@@ -73,6 +74,10 @@ class Report(Base):
     current_price = Column(Integer)
     expected_return = Column(Float)
     attachment_url = Column(String(500))
+
+    summary = Column(Text, nullable=True)
+    novice_content = Column(Text, nullable=True)
+    expert_content = Column(Text, nullable=True)
 
     stock_id = Column(Integer, ForeignKey("stocks.id"), nullable=False)
     broker_id = Column(Integer, ForeignKey("brokers.id"), nullable=True)
@@ -163,13 +168,32 @@ def init_db():
 # CSV → DB 적재
 # ============================
 
-def load_csv_to_db(csv_path: str):
+def load_csv_to_db(csv_path: str, reviews_csv_path: str = None):
     session = SessionLocal()
 
     # 캐시 (중복 insert 방지)
     stock_cache: dict[str, Stock] = {}
     broker_cache: dict[str, Broker] = {}
     author_cache: dict[str, Author] = {}
+
+    # 리뷰 데이터 로드 (report_id -> {summary, novice, expert})
+    reviews_map = {}
+    if reviews_csv_path:
+        try:
+            with open(reviews_csv_path, newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    # filename: "644830.pdf" -> id: "644830"
+                    filename = row.get("filename", "")
+                    if filename.endswith(".pdf"):
+                        report_id = filename.replace(".pdf", "")
+                        reviews_map[report_id] = {
+                            "summary": row.get("summary"),
+                            "novice_content": row.get("novice_content"),
+                            "expert_content": row.get("expert_content"),
+                        }
+        except Exception as e:
+            print(f"리뷰 데이터 로드 실패: {e}")
 
     try:
         with open(csv_path, newline="", encoding="utf-8-sig") as f:
@@ -192,6 +216,30 @@ def load_csv_to_db(csv_path: str):
 
                 company_info_url = normalize_str(row.get("기업정보"))
                 attachment_url = normalize_str(row.get("첨부파일"))
+
+                # 중복 체크: attachment_url이 같으면 이미 있는 것으로 간주
+                if attachment_url:
+                    existing = session.query(Report).filter_by(attachment_url=attachment_url).first()
+                    if existing:
+                        continue
+
+                # 리뷰 데이터 매핑
+                summary = None
+                novice_content = None
+                expert_content = None
+                
+                if attachment_url:
+                    # url에서 report_idx 추출 (예: ...?report_idx=644855)
+                    # 간단히 파싱
+                    import re
+                    match = re.search(r"report_idx=(\d+)", attachment_url)
+                    if match:
+                        r_id = match.group(1)
+                        if r_id in reviews_map:
+                            data = reviews_map[r_id]
+                            summary = data["summary"]
+                            novice_content = data["novice_content"]
+                            expert_content = data["expert_content"]
 
                 # 2) 종목 (stocks) 처리
                 #    stock_code를 기준으로 1개만 존재
@@ -244,6 +292,9 @@ def load_csv_to_db(csv_path: str):
                     current_price=current_price,
                     expected_return=expected_return,
                     attachment_url=attachment_url,
+                    summary=summary,
+                    novice_content=novice_content,
+                    expert_content=expert_content,
 
                     stock_id=stock.id,
                     broker_id=broker.id if broker else None,
@@ -301,5 +352,5 @@ def create_stock_summary_view():
 if __name__ == "__main__":
     init_db()
     # 네 CSV 파일 경로로 수정
-    load_csv_to_db("리포트_데이터_최종.csv")
+    load_csv_to_db("리포트_데이터_최종.csv", "pdf_summary_300files.csv")
     create_stock_summary_view()
